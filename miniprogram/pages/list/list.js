@@ -1,6 +1,20 @@
 const app = getApp();
 const { request, toast, requireAuth } = require('../../utils/api.js');
 
+const DAY_MS = 86400000;
+function decorateItem(a) {
+    let tag = '';
+    if (a.expiryDate) {
+        const t = new Date(a.expiryDate).getTime();
+        const now = Date.now();
+        if (!isNaN(t)) {
+            if (t < now) tag = 'expired';
+            else if (t - now < 30 * DAY_MS) tag = 'soon';
+        }
+    }
+    return Object.assign({}, a, { _tag: tag });
+}
+
 Page({
     data: {
         keyword: '',
@@ -34,7 +48,7 @@ Page({
             if (cur && cur.name) params.push('primary=' + encodeURIComponent(cur.name));
             const qs = params.length ? '?' + params.join('&') : '';
             const r = await request('/assets' + qs);
-            const items = (r.items || []).map(this.decorate);
+            const items = (r.items || []).map(decorateItem);
             this.setData({ items });
 
             const s = await request('/stats');
@@ -47,16 +61,8 @@ Page({
         }
     },
     decorate(a) {
-        let tag = '';
-        if (a.expiryDate) {
-            const t = new Date(a.expiryDate).getTime();
-            const now = Date.now();
-            if (!isNaN(t)) {
-                if (t < now) tag = 'expired';
-                else if (t - now < 30 * 86400000) tag = 'soon';
-            }
-        }
-        return Object.assign({}, a, { _tag: tag });
+        // 保留方法以兼容 wxml data 计算（未使用）
+        return decorateItem(a);
     },
     onPullDownRefresh() { this.loadAssets(); },
     onKw(e) { this.setData({ keyword: e.detail.value }); },

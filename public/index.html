@@ -122,7 +122,7 @@
     <!-- 分类管理 -->
     <div id="categories-tab" class="tab-content">
         <div class="controls">
-            <button class="btn-primary" onclick="openCategoryModal('primary')">➕ 添加一级分类</button>
+            <button class="btn-primary" onclick="openCategoryModal()">➕ 添加一级分类</button>
         </div>
         <div id="categoriesList"></div>
     </div>
@@ -180,17 +180,12 @@
     </div>
 </div>
 
-<!-- 分类模态框 -->
+<!-- 一级分类模态框（添加二级分类直接用 prompt） -->
 <div id="categoryModal" class="modal">
     <div class="modal-content">
-        <h2 id="categoryModalTitle">添加分类</h2>
-        <div class="form-group"><label id="categoryLabel1">分类名称</label>
+        <h2>添加一级分类</h2>
+        <div class="form-group"><label>分类名称</label>
             <input type="text" id="categoryInput1" placeholder="请输入分类名称">
-        </div>
-        <div class="form-group" id="categoryInput2Container" style="display:none">
-            <label id="categoryLabel2">二级分类名称</label>
-            <input type="text" id="categoryInput2" placeholder="请输入二级分类名称">
-            <input type="hidden" id="selectedPrimaryCategory">
         </div>
         <div class="form-group" style="display:flex;gap:10px;justify-content:flex-end;">
             <button type="button" class="btn-secondary" onclick="closeCategoryModal()">取消</button>
@@ -469,28 +464,17 @@ async function loadCategories() {
     `).join('');
 }
 
-function openCategoryModal(type) {
-    document.getElementById('categoryModalTitle').textContent = type === 'primary' ? '添加一级分类' : '添加二级分类';
+function openCategoryModal() {
     document.getElementById('categoryInput1').value = '';
-    document.getElementById('categoryInput2').value = '';
-    document.getElementById('categoryInput2Container').style.display = type === 'secondary' ? '' : 'none';
-    document.getElementById('categoryInput1').dataset.type = type;
     document.getElementById('categoryModal').classList.add('active');
 }
 function closeCategoryModal() { document.getElementById('categoryModal').classList.remove('active'); }
 
 async function saveCategory() {
-    const type = document.getElementById('categoryInput1').dataset.type;
     const v1 = document.getElementById('categoryInput1').value.trim();
     if (!v1) return toast('名称必填', false);
     try {
-        if (type === 'primary') {
-            await api('/categories/primary', { method: 'POST', body: JSON.stringify({ name: v1 }) });
-        } else {
-            const v2 = document.getElementById('categoryInput2').value.trim();
-            const primaryName = document.getElementById('selectedPrimaryCategory').value;
-            await api('/categories/secondary', { method: 'POST', body: JSON.stringify({ primaryName, secondaryName: v2 || v1 }) });
-        }
+        await api('/categories/primary', { method: 'POST', body: JSON.stringify({ name: v1 }) });
         toast('已保存'); closeCategoryModal(); loadCategories();
     } catch (e) { toast(e.message, false); }
 }

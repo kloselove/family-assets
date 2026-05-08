@@ -36,6 +36,7 @@ COPY --chown=app:app --from=deps /app/node_modules ./node_modules
 COPY --chown=app:app package*.json ./
 COPY --chown=app:app server.js ./
 COPY --chown=app:app lib ./lib
+COPY --chown=app:app routes ./routes
 COPY --chown=app:app scripts ./scripts
 COPY --chown=app:app public ./public
 
