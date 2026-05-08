@@ -1,0 +1,40 @@
+<view class="page">
+    <view class="stat-row">
+        <view class="stat"><view class="num">{{stats.total}}</view><view class="lab">总资产</view></view>
+        <view class="stat warn"><view class="num">{{stats.expiringSoon}}</view><view class="lab">即将过期</view></view>
+        <view class="stat danger"><view class="num">{{stats.expired}}</view><view class="lab">已过期</view></view>
+    </view>
+
+    <view class="search-row">
+        <input class="search" placeholder="🔎 搜索资产/分类" value="{{keyword}}" bindinput="onKw" bindconfirm="onSearch"/>
+        <picker mode="selector" range="{{primaryList}}" range-key="label" value="{{primaryIndex}}" bindchange="onPrimaryChange">
+            <view class="picker">{{primaryList[primaryIndex].label}} ▾</view>
+        </picker>
+    </view>
+
+    <block wx:if="{{items.length === 0}}">
+        <view class="empty">暂无资产 · 下拉刷新或点击右下角 +</view>
+    </block>
+    <block wx:else>
+        <view class="card" wx:for="{{items}}" wx:key="uuid">
+            <view class="row">
+                <view class="flex1">
+                    <view class="name">{{item.assetName}}</view>
+                    <view class="meta">
+                        <text class="tag">{{item.primaryCategory}} / {{item.secondaryCategory}}</text>
+                        <text class="tag" wx:if="{{item._tag === 'soon'}}">即将过期</text>
+                        <text class="tag danger" wx:if="{{item._tag === 'expired'}}">已过期</text>
+                    </view>
+                    <view class="meta muted">数量 {{item.quantity}} · 过期 {{item.expiryDate || '—'}}</view>
+                    <view class="meta muted">更新人 {{item.updatedBy}} · {{item.updatedAt}}</view>
+                </view>
+                <view class="actions">
+                    <button size="mini" class="btn-primary" data-uuid="{{item.uuid}}" bindtap="editAsset">编辑</button>
+                    <button size="mini" class="btn-danger" data-uuid="{{item.uuid}}" bindtap="delAsset">删除</button>
+                </view>
+            </view>
+        </view>
+    </block>
+
+    <view class="fab" bindtap="addAsset">+</view>
+</view>

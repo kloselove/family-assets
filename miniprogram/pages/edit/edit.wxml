@@ -1,0 +1,26 @@
+<view class="page">
+    <view class="card">
+        <view class="label">一级分类</view>
+        <picker mode="selector" range="{{primaries}}" value="{{primaryIndex}}" bindchange="onPrimary">
+            <view class="input picker">{{primaryIndex >= 0 ? primaries[primaryIndex] : '请选择'}} ▾</view>
+        </picker>
+
+        <view class="label">二级分类</view>
+        <picker mode="selector" range="{{secondaries}}" value="{{secondaryIndex}}" bindchange="onSecondary">
+            <view class="input picker">{{secondaryIndex >= 0 ? secondaries[secondaryIndex] : '请选择'}} ▾</view>
+        </picker>
+
+        <view class="label">资产名称</view>
+        <input class="input" placeholder="如：身份证" value="{{assetName}}" bindinput="onName"/>
+
+        <view class="label">数量</view>
+        <input class="input" type="number" value="{{quantity}}" bindinput="onQty"/>
+
+        <view class="label">过期时间（可选）</view>
+        <picker mode="date" value="{{expiryDate}}" bindchange="onDate">
+            <view class="input picker">{{expiryDate || '点击选择日期'}}</view>
+        </picker>
+
+        <button class="btn-primary" bindtap="save" style="margin-top: 30rpx;">保 存</button>
+    </view>
+</view>

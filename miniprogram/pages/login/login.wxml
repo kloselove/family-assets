@@ -1,0 +1,17 @@
+<view class="login-wrap">
+    <view class="title">家庭资产管理</view>
+    <view class="sub">家庭物品 · 录入查询 · 数据备份</view>
+
+    <view class="form">
+        <view class="label">账号</view>
+        <input class="input" placeholder="请输入账号" value="{{username}}" bindinput="onUser" />
+        <view class="label">密码</view>
+        <input class="input" password placeholder="请输入密码" value="{{password}}" bindinput="onPwd" />
+
+        <button class="btn-primary" loading="{{loading}}" bindtap="loginByPwd">登 录</button>
+        <button class="btn-wx" loading="{{wxLoading}}" bindtap="loginByWx">使用微信一键登录</button>
+        <view class="muted tip">
+            首次微信登录请先填好账号密码，再点「微信一键登录」完成与账号的绑定。
+        </view>
+    </view>
+</view>

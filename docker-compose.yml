@@ -1,0 +1,33 @@
+services:
+  family-assets:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: family-assets:latest
+    container_name: family-assets
+    restart: unless-stopped
+    ports:
+      # 宿主机端口 : 容器端口
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      # 兜底默认值（被 .env 覆盖）；放这里方便仅靠 compose 启动时也能跑
+      TZ: Asia/Shanghai
+      PORT: "3000"
+    volumes:
+      # 资产 CSV / 分类 / 用户 JSON 持久化
+      - ./data:/app/data
+      # 定时备份输出
+      - ./backups:/app/backups
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"

@@ -1,0 +1,7 @@
+.page { padding: 20rpx; }
+.userhead { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16rpx; padding: 60rpx 30rpx; color: #fff; text-align: center; margin-bottom: 30rpx; }
+.avatar { font-size: 36rpx; font-weight: 700; }
+.role { font-size: 24rpx; opacity: .9; margin-top: 10rpx; }
+.menu { display: flex; align-items: center; justify-content: space-between; padding: 30rpx; }
+.menu .arrow { color: #ccc; font-size: 36rpx; }
+.menu.danger { color: #dc3545; }

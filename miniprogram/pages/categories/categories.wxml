@@ -1,0 +1,20 @@
+<view class="page">
+    <button class="btn-primary" bindtap="addPrimary" style="margin-bottom:20rpx;">➕ 新建一级分类</button>
+
+    <view class="card" wx:for="{{categories}}" wx:key="id" wx:for-item="c">
+        <view class="row">
+            <view class="flex1 cname">📁 {{c.name}}</view>
+            <button size="mini" class="btn-secondary" data-name="{{c.name}}" bindtap="addSecondary">+ 二级</button>
+            <button size="mini" class="btn-danger" data-name="{{c.name}}" bindtap="delPrimary" style="margin-left:10rpx;">删</button>
+        </view>
+        <view class="subs">
+            <block wx:if="{{c.children.length}}">
+                <view class="sub-item" wx:for="{{c.children}}" wx:for-item="s" wx:key="*this">
+                    <text class="tag">{{s}}</text>
+                    <text class="del" data-primary="{{c.name}}" data-secondary="{{s}}" bindtap="delSecondary">×</text>
+                </view>
+            </block>
+            <view wx:else class="muted">无二级分类</view>
+        </view>
+    </view>
+</view>

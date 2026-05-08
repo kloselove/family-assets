@@ -1,0 +1,14 @@
+.login-wrap {
+    min-height: 100vh; padding: 120rpx 60rpx 40rpx;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+.title { font-size: 48rpx; color: #fff; font-weight: 700; }
+.sub { color: rgba(255,255,255,.85); margin-top: 12rpx; margin-bottom: 60rpx; }
+.form {
+    background: #fff; border-radius: 20rpx; padding: 50rpx 40rpx;
+    box-shadow: 0 16rpx 40rpx rgba(0,0,0,.15);
+}
+.input { background: #f5f6fa; border: none; }
+.btn-primary { margin-top: 30rpx; }
+.btn-wx { background: #07c160; color: #fff; margin-top: 20rpx; }
+.tip { margin-top: 24rpx; line-height: 1.6; }

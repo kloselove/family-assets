@@ -1,0 +1,24 @@
+node_modules/
+package-lock.json
+
+# 运行时配置（含密钥）
+.env
+.env.local
+
+# 数据持久化（本地数据不应入库）
+data/*.csv
+data/*.json
+backups/
+
+# 日志
+server.log
+*.log
+
+# 系统/编辑器
+.DS_Store
+.vscode/
+.idea/
+
+# 微信开发者工具
+miniprogram/.idea/
+miniprogram/project.private.config.json

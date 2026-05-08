@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 家庭资产管理系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card {
+            width: 380px; background: #fff; border-radius: 12px;
+            padding: 40px 32px; box-shadow: 0 20px 60px rgba(0,0,0,.2);
+        }
+        h1 { font-size: 22px; margin-bottom: 6px; color: #222; text-align: center; }
+        .sub { font-size: 13px; color: #888; text-align: center; margin-bottom: 28px; }
+        label { display: block; font-size: 13px; color: #555; margin: 14px 0 6px; }
+        input {
+            width: 100%; padding: 11px 12px; border: 1px solid #ddd;
+            border-radius: 6px; font-size: 14px; outline: none;
+        }
+        input:focus { border-color: #667eea; }
+        button {
+            width: 100%; padding: 12px; margin-top: 22px; border: none;
+            border-radius: 6px; background: #667eea; color: #fff;
+            font-size: 15px; cursor: pointer; transition: .2s;
+        }
+        button:hover { background: #5a6fd8; }
+        button:disabled { background: #aab; cursor: not-allowed; }
+        .err { color: #e74c3c; font-size: 13px; margin-top: 12px; min-height: 18px; text-align: center; }
+        .tip { font-size: 12px; color: #999; margin-top: 18px; text-align: center; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>家庭资产管理系统</h1>
+        <div class="sub">请使用账号密码登录</div>
+        <form id="loginForm">
+            <label>用户名</label>
+            <input id="username" autocomplete="username" required>
+            <label>密码</label>
+            <input id="password" type="password" autocomplete="current-password" required>
+            <button type="submit" id="btn">登 录</button>
+            <div class="err" id="err"></div>
+        </form>
+        <div class="tip">默认管理员：admin / admin123<br>登录后请尽快修改默认密码</div>
+    </div>
+    <script>
+        const form = document.getElementById('loginForm');
+        const btn = document.getElementById('btn');
+        const errEl = document.getElementById('err');
+
+        // 已登录则直接跳转
+        if (localStorage.getItem('fa_token')) {
+            location.replace('/');
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errEl.textContent = '';
+            btn.disabled = true; btn.textContent = '登录中...';
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: document.getElementById('username').value.trim(),
+                        password: document.getElementById('password').value
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || '登录失败');
+                localStorage.setItem('fa_token', data.token);
+                localStorage.setItem('fa_user', JSON.stringify(data.user));
+                location.replace('/');
+            } catch (err) {
+                errEl.textContent = err.message;
+            } finally {
+                btn.disabled = false; btn.textContent = '登 录';
+            }
+        });
+    </script>
+</body>
+</html>

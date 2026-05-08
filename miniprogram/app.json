@@ -1,0 +1,27 @@
+{
+  "pages": [
+    "pages/login/login",
+    "pages/list/list",
+    "pages/edit/edit",
+    "pages/categories/categories",
+    "pages/profile/profile"
+  ],
+  "window": {
+    "navigationBarTitleText": "家庭资产",
+    "navigationBarBackgroundColor": "#667eea",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f5f5f5"
+  },
+  "tabBar": {
+    "color": "#888",
+    "selectedColor": "#667eea",
+    "backgroundColor": "#ffffff",
+    "list": [
+      { "pagePath": "pages/list/list", "text": "资产" },
+      { "pagePath": "pages/categories/categories", "text": "分类" },
+      { "pagePath": "pages/profile/profile", "text": "我的" }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

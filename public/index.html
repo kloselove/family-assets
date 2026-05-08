@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>家庭资产管理系统</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 20px; }
+    .container { max-width: 1400px; margin: 0 auto; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .topbar h1 { font-size: 22px; color: #333; }
+    .userbox { font-size: 13px; color: #555; display: flex; align-items: center; gap: 10px; }
+    .userbox .role { background: #007bff; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
+    button { padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer; font-size: 13px; transition: .2s; }
+    .btn-primary { background: #007bff; color: white; }
+    .btn-primary:hover { background: #0056b3; }
+    .btn-success { background: #28a745; color: white; }
+    .btn-success:hover { background: #1e7e34; }
+    .btn-danger { background: #dc3545; color: white; }
+    .btn-danger:hover { background: #b21f2d; }
+    .btn-warning { background: #ffc107; color: #333; }
+    .btn-secondary { background: #6c757d; color: white; }
+    .btn-secondary:hover { background: #545b62; }
+
+    .tabs { display: flex; gap: 4px; margin-bottom: 18px; border-bottom: 2px solid #ddd; }
+    .tab { padding: 10px 20px; cursor: pointer; border: none; background: none; font-size: 15px; color: #666; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+    .tab.active { color: #007bff; border-bottom-color: #007bff; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 18px; }
+    .stat-card { background: #fff; padding: 18px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+    .stat-card h3 { font-size: 13px; color: #666; margin-bottom: 8px; }
+    .stat-card .value { font-size: 26px; font-weight: 700; color: #007bff; }
+    .stat-card .value.warn { color: #ff8c00; }
+    .stat-card .value.danger { color: #dc3545; }
+
+    .controls { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+    .controls input[type="text"], .controls select {
+        padding: 7px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;
+    }
+
+    .table-container { background: #fff; border-radius: 10px; overflow-x: auto; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 13px; }
+    th { background: #f8f9fa; color: #444; font-weight: 600; }
+    tr.expired { background: #ffefef; }
+    tr.expiring { background: #fff8e6; }
+    .actions { display: flex; gap: 6px; }
+    .empty-state { text-align: center; padding: 40px; color: #999; }
+
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 100; align-items: center; justify-content: center; }
+    .modal.active { display: flex; }
+    .modal-content { background: #fff; padding: 24px; border-radius: 10px; width: 480px; max-width: 92vw; max-height: 90vh; overflow-y: auto; }
+    .modal-content h2 { font-size: 18px; margin-bottom: 14px; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-size: 13px; color: #555; margin-bottom: 6px; }
+    .form-group input, .form-group select { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+
+    input[type="file"] { display: none; }
+    .category-section { background: #fff; padding: 16px 20px; border-radius: 10px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+    .category-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px dashed #eee; }
+    .category-item:last-child { border-bottom: none; }
+    .subcategory-list { color: #666; font-size: 13px; padding: 6px 0 0 12px; }
+    .pill { display: inline-block; padding: 2px 8px; background: #e9f3ff; color: #1976d2; border-radius: 10px; margin: 0 6px 4px 0; font-size: 12px; }
+    .toast { position: fixed; top: 20px; right: 20px; padding: 10px 16px; border-radius: 6px; color: #fff; font-size: 13px; z-index: 200; box-shadow: 0 4px 14px rgba(0,0,0,.15); }
+    .toast.ok { background: #28a745; }
+    .toast.err { background: #dc3545; }
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="topbar">
+        <h1>🏠 家庭资产管理系统</h1>
+        <div class="userbox" id="userbox"></div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" data-tab="assets">资产管理</button>
+        <button class="tab" data-tab="categories">分类管理</button>
+        <button class="tab" data-tab="users" id="tab-users" style="display:none">用户管理</button>
+        <button class="tab" data-tab="backup" id="tab-backup" style="display:none">备份管理</button>
+    </div>
+
+    <!-- 资产管理 -->
+    <div id="assets-tab" class="tab-content active">
+        <div class="stats">
+            <div class="stat-card"><h3>总资产数量</h3><div class="value" id="statTotal">0</div></div>
+            <div class="stat-card"><h3>资产种类</h3><div class="value" id="statTypes">0</div></div>
+            <div class="stat-card"><h3>30 天内将过期</h3><div class="value warn" id="statSoon">0</div></div>
+            <div class="stat-card"><h3>已过期</h3><div class="value danger" id="statExpired">0</div></div>
+        </div>
+
+        <div class="controls">
+            <input type="text" id="kw" placeholder="🔎 搜索资产名/分类..." onkeydown="if(event.key==='Enter')loadAssets()">
+            <select id="filterPrimary" onchange="loadAssets()"><option value="">全部一级分类</option></select>
+            <select id="filterExpire" onchange="loadAssets()">
+                <option value="">不过滤</option>
+                <option value="30">30 天内将过期</option>
+                <option value="7">7 天内将过期</option>
+            </select>
+            <button class="btn-primary" onclick="openModal()">➕ 添加资产</button>
+            <button class="btn-success" onclick="exportCSV()">📥 导出 CSV</button>
+            <button class="btn-secondary" onclick="document.getElementById('fileInput').click()">📤 导入 CSV</button>
+            <input type="file" id="fileInput" accept=".csv" onchange="importCSV(event)">
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>一级分类</th><th>二级分类</th><th>资产名称</th><th>数量</th>
+                        <th>录入时间</th><th>过期时间</th><th>最后更新</th><th>更新用户</th><th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="assetsTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 分类管理 -->
+    <div id="categories-tab" class="tab-content">
+        <div class="controls">
+            <button class="btn-primary" onclick="openCategoryModal('primary')">➕ 添加一级分类</button>
+        </div>
+        <div id="categoriesList"></div>
+    </div>
+
+    <!-- 用户管理 -->
+    <div id="users-tab" class="tab-content">
+        <div class="controls">
+            <button class="btn-primary" onclick="openUserModal()">➕ 添加用户</button>
+            <button class="btn-secondary" onclick="openChangePwdModal()">🔑 修改我的密码</button>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead><tr><th>用户名</th><th>角色</th><th>已绑定微信</th><th>创建时间</th><th>最后登录</th><th>操作</th></tr></thead>
+                <tbody id="usersTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 备份管理 -->
+    <div id="backup-tab" class="tab-content">
+        <div class="controls">
+            <button class="btn-primary" onclick="manualBackup()">💾 立即备份</button>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead><tr><th>备份文件</th></tr></thead>
+                <tbody id="backupsTable"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 资产模态框 -->
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <h2 id="modalTitle">添加资产</h2>
+        <form id="assetForm">
+            <input type="hidden" id="assetUuid">
+            <div class="form-group"><label>一级分类 *</label>
+                <select id="assetPrimaryCategory" onchange="updateSecondaryCategories()" required>
+                    <option value="">请选择</option>
+                </select>
+            </div>
+            <div class="form-group"><label>二级分类 *</label>
+                <select id="assetSecondaryCategory" required><option value="">请选择</option></select>
+            </div>
+            <div class="form-group"><label>资产名称 *</label><input type="text" id="assetName" required></div>
+            <div class="form-group"><label>数量</label><input type="number" id="assetQuantity" min="1" value="1"></div>
+            <div class="form-group"><label>过期时间</label><input type="date" id="assetExpiryDate"></div>
+            <div class="form-group" style="display:flex;gap:10px;justify-content:flex-end;">
+                <button type="button" class="btn-secondary" onclick="closeModal()">取消</button>
+                <button type="submit" class="btn-primary">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 分类模态框 -->
+<div id="categoryModal" class="modal">
+    <div class="modal-content">
+        <h2 id="categoryModalTitle">添加分类</h2>
+        <div class="form-group"><label id="categoryLabel1">分类名称</label>
+            <input type="text" id="categoryInput1" placeholder="请输入分类名称">
+        </div>
+        <div class="form-group" id="categoryInput2Container" style="display:none">
+            <label id="categoryLabel2">二级分类名称</label>
+            <input type="text" id="categoryInput2" placeholder="请输入二级分类名称">
+            <input type="hidden" id="selectedPrimaryCategory">
+        </div>
+        <div class="form-group" style="display:flex;gap:10px;justify-content:flex-end;">
+            <button type="button" class="btn-secondary" onclick="closeCategoryModal()">取消</button>
+            <button type="button" class="btn-primary" onclick="saveCategory()">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- 用户模态框 -->
+<div id="userModal" class="modal">
+    <div class="modal-content">
+        <h2>添加用户</h2>
+        <div class="form-group"><label>用户名</label><input type="text" id="newUsername"></div>
+        <div class="form-group"><label>密码</label><input type="password" id="newPassword"></div>
+        <div class="form-group"><label>角色</label>
+            <select id="newRole"><option value="member">普通成员</option><option value="admin">管理员</option></select>
+        </div>
+        <div class="form-group" style="display:flex;gap:10px;justify-content:flex-end;">
+            <button type="button" class="btn-secondary" onclick="closeUserModal()">取消</button>
+            <button type="button" class="btn-primary" onclick="saveUser()">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- 改密模态框 -->
+<div id="pwdModal" class="modal">
+    <div class="modal-content">
+        <h2>修改我的密码</h2>
+        <div class="form-group"><label>原密码</label><input type="password" id="oldPwd"></div>
+        <div class="form-group"><label>新密码（≥6 位）</label><input type="password" id="newPwd"></div>
+        <div class="form-group" style="display:flex;gap:10px;justify-content:flex-end;">
+            <button type="button" class="btn-secondary" onclick="document.getElementById('pwdModal').classList.remove('active')">取消</button>
+            <button type="button" class="btn-primary" onclick="changePwd()">提交</button>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ========== 登录态 ========== */
+const TOKEN = localStorage.getItem('fa_token');
+const USER = JSON.parse(localStorage.getItem('fa_user') || 'null');
+if (!TOKEN || !USER) location.replace('/login.html');
+
+const API = '/api';
+function authHeaders(extra) { return Object.assign({ 'Authorization': 'Bearer ' + TOKEN }, extra || {}); }
+
+async function api(url, options = {}) {
+    const res = await fetch(API + url, {
+        ...options,
+        headers: authHeaders(options.headers || (options.body && !(options.body instanceof FormData) ? { 'Content-Type': 'application/json' } : {}))
+    });
+    if (res.status === 401) { localStorage.clear(); location.replace('/login.html'); return; }
+    const text = await res.text();
+    let data; try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
+    if (!res.ok) throw new Error(data.error || res.statusText);
+    return data;
+}
+
+function toast(msg, ok = true) {
+    const el = document.createElement('div');
+    el.className = 'toast ' + (ok ? 'ok' : 'err');
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2200);
+}
+
+function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function fmtDate(s) {
+    if (!s) return '-';
+    const d = new Date(s);
+    if (isNaN(d.getTime())) return s;
+    return d.toLocaleString('zh-CN', { hour12: false });
+}
+function fmtDay(s) {
+    if (!s) return '-';
+    const d = new Date(s);
+    if (isNaN(d.getTime())) return s;
+    return d.toISOString().slice(0, 10);
+}
+
+/* ========== 顶栏 ========== */
+function renderUserBox() {
+    const box = document.getElementById('userbox');
+    box.innerHTML = `
+        <span class="role">${USER.role === 'admin' ? '管理员' : '成员'}</span>
+        <span>${escapeHtml(USER.username)}</span>
+        <button class="btn-secondary" onclick="logout()">退出</button>
+    `;
+    if (USER.role === 'admin') {
+        document.getElementById('tab-users').style.display = '';
+        document.getElementById('tab-backup').style.display = '';
+    }
+}
+function logout() {
+    localStorage.clear();
+    location.replace('/login.html');
+}
+
+/* ========== Tab 切换 ========== */
+document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const t = btn.dataset.tab;
+        document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(t + '-tab').classList.add('active');
+        if (t === 'categories') loadCategories();
+        if (t === 'users') loadUsers();
+        if (t === 'backup') loadBackups();
+    });
+});
+
+/* ========== 资产 ========== */
+let CATEGORIES = { categories: [] };
+
+async function loadAssets() {
+    const kw = document.getElementById('kw').value.trim();
+    const primary = document.getElementById('filterPrimary').value;
+    const expiringDays = document.getElementById('filterExpire').value;
+    const qs = new URLSearchParams();
+    if (kw) qs.set('keyword', kw);
+    if (primary) qs.set('primary', primary);
+    if (expiringDays) qs.set('expiringDays', expiringDays);
+
+    try {
+        const data = await api('/assets?' + qs.toString());
+        renderAssets(data.items);
+    } catch (e) { toast(e.message, false); }
+    loadStats();
+}
+
+function rowClass(a) {
+    if (!a.expiryDate) return '';
+    const t = new Date(a.expiryDate).getTime();
+    if (isNaN(t)) return '';
+    const now = Date.now();
+    if (t < now) return 'expired';
+    if (t - now < 30 * 86400000) return 'expiring';
+    return '';
+}
+
+function renderAssets(items) {
+    const tb = document.getElementById('assetsTable');
+    if (!items.length) {
+        tb.innerHTML = '<tr><td colspan="9" class="empty-state">暂无资产数据</td></tr>'; return;
+    }
+    tb.innerHTML = items.map(a => `
+        <tr class="${rowClass(a)}">
+            <td>${escapeHtml(a.primaryCategory)}</td>
+            <td>${escapeHtml(a.secondaryCategory)}</td>
+            <td>${escapeHtml(a.assetName)}</td>
+            <td>${escapeHtml(a.quantity)}</td>
+            <td>${fmtDate(a.createdAt)}</td>
+            <td>${fmtDay(a.expiryDate)}</td>
+            <td>${fmtDate(a.updatedAt)}</td>
+            <td>${escapeHtml(a.updatedBy)}</td>
+            <td><div class="actions">
+                <button class="btn-primary" onclick='editAsset(${JSON.stringify(a.uuid)})'>编辑</button>
+                <button class="btn-danger" onclick='deleteAsset(${JSON.stringify(a.uuid)})'>删除</button>
+            </div></td>
+        </tr>
+    `).join('');
+}
+
+async function loadStats() {
+    try {
+        const s = await api('/stats');
+        document.getElementById('statTotal').textContent = s.total;
+        document.getElementById('statTypes').textContent = Object.keys(s.byPrimary || {}).length;
+        document.getElementById('statSoon').textContent = s.expiringSoon;
+        document.getElementById('statExpired').textContent = s.expired;
+    } catch (e) {}
+}
+
+let editingAsset = null;
+function openModal() {
+    editingAsset = null;
+    document.getElementById('modalTitle').textContent = '添加资产';
+    document.getElementById('assetForm').reset();
+    document.getElementById('assetUuid').value = '';
+    refreshPrimarySelect();
+    document.getElementById('modal').classList.add('active');
+}
+function closeModal() { document.getElementById('modal').classList.remove('active'); }
+
+async function editAsset(uuid) {
+    const data = await api('/assets');
+    const a = data.items.find(x => x.uuid === uuid);
+    if (!a) return;
+    editingAsset = a;
+    document.getElementById('modalTitle').textContent = '编辑资产';
+    document.getElementById('assetUuid').value = a.uuid;
+    refreshPrimarySelect();
+    document.getElementById('assetPrimaryCategory').value = a.primaryCategory;
+    updateSecondaryCategories();
+    document.getElementById('assetSecondaryCategory').value = a.secondaryCategory;
+    document.getElementById('assetName').value = a.assetName;
+    document.getElementById('assetQuantity').value = a.quantity;
+    document.getElementById('assetExpiryDate').value = a.expiryDate ? a.expiryDate.slice(0, 10) : '';
+    document.getElementById('modal').classList.add('active');
+}
+
+async function deleteAsset(uuid) {
+    if (!confirm('确认删除该资产？')) return;
+    try { await api('/assets/' + uuid, { method: 'DELETE' }); toast('已删除'); loadAssets(); }
+    catch (e) { toast(e.message, false); }
+}
+
+document.getElementById('assetForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const payload = {
+        primaryCategory: document.getElementById('assetPrimaryCategory').value,
+        secondaryCategory: document.getElementById('assetSecondaryCategory').value,
+        assetName: document.getElementById('assetName').value.trim(),
+        quantity: Number(document.getElementById('assetQuantity').value || 1),
+        expiryDate: document.getElementById('assetExpiryDate').value
+    };
+    try {
+        const uuid = document.getElementById('assetUuid').value;
+        if (uuid) await api('/assets/' + uuid, { method: 'PUT', body: JSON.stringify(payload) });
+        else await api('/assets', { method: 'POST', body: JSON.stringify(payload) });
+        toast('已保存'); closeModal(); loadAssets();
+    } catch (err) { toast(err.message, false); }
+});
+
+/* ========== 分类下拉 ========== */
+async function refreshPrimarySelect() {
+    if (!CATEGORIES.categories.length) CATEGORIES = await api('/categories');
+    const sel = document.getElementById('assetPrimaryCategory');
+    sel.innerHTML = '<option value="">请选择</option>' +
+        CATEGORIES.categories.map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('');
+    document.getElementById('assetSecondaryCategory').innerHTML = '<option value="">请选择</option>';
+
+    // 同步过滤下拉
+    const fp = document.getElementById('filterPrimary');
+    const cur = fp.value;
+    fp.innerHTML = '<option value="">全部一级分类</option>' +
+        CATEGORIES.categories.map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('');
+    fp.value = cur;
+}
+function updateSecondaryCategories() {
+    const p = document.getElementById('assetPrimaryCategory').value;
+    const cat = CATEGORIES.categories.find(c => c.name === p);
+    const sec = document.getElementById('assetSecondaryCategory');
+    sec.innerHTML = '<option value="">请选择</option>' +
+        (cat ? cat.children.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('') : '');
+}
+
+/* ========== 分类管理 ========== */
+async function loadCategories() {
+    CATEGORIES = await api('/categories');
+    const div = document.getElementById('categoriesList');
+    if (!CATEGORIES.categories.length) { div.innerHTML = '<div class="empty-state">暂无分类</div>'; return; }
+    div.innerHTML = CATEGORIES.categories.map(c => `
+        <div class="category-section">
+            <div class="category-item">
+                <strong>📁 ${escapeHtml(c.name)}</strong>
+                <div class="actions">
+                    <button class="btn-success" onclick='addSecondary(${JSON.stringify(c.name)})'>➕ 加二级</button>
+                    <button class="btn-warning" onclick='renamePrimary(${JSON.stringify(c.name)})'>✏️ 重命名</button>
+                    <button class="btn-danger" onclick='delPrimary(${JSON.stringify(c.name)})'>删除</button>
+                </div>
+            </div>
+            <div class="subcategory-list">
+                ${c.children.map(s => `
+                    <span class="pill">${escapeHtml(s)}
+                        <a style="cursor:pointer;color:#dc3545;margin-left:6px"
+                           onclick='delSecondary(${JSON.stringify(c.name)},${JSON.stringify(s)})'>×</a>
+                    </span>
+                `).join('') || '<span style="color:#999">无</span>'}
+            </div>
+        </div>
+    `).join('');
+}
+
+function openCategoryModal(type) {
+    document.getElementById('categoryModalTitle').textContent = type === 'primary' ? '添加一级分类' : '添加二级分类';
+    document.getElementById('categoryInput1').value = '';
+    document.getElementById('categoryInput2').value = '';
+    document.getElementById('categoryInput2Container').style.display = type === 'secondary' ? '' : 'none';
+    document.getElementById('categoryInput1').dataset.type = type;
+    document.getElementById('categoryModal').classList.add('active');
+}
+function closeCategoryModal() { document.getElementById('categoryModal').classList.remove('active'); }
+
+async function saveCategory() {
+    const type = document.getElementById('categoryInput1').dataset.type;
+    const v1 = document.getElementById('categoryInput1').value.trim();
+    if (!v1) return toast('名称必填', false);
+    try {
+        if (type === 'primary') {
+            await api('/categories/primary', { method: 'POST', body: JSON.stringify({ name: v1 }) });
+        } else {
+            const v2 = document.getElementById('categoryInput2').value.trim();
+            const primaryName = document.getElementById('selectedPrimaryCategory').value;
+            await api('/categories/secondary', { method: 'POST', body: JSON.stringify({ primaryName, secondaryName: v2 || v1 }) });
+        }
+        toast('已保存'); closeCategoryModal(); loadCategories();
+    } catch (e) { toast(e.message, false); }
+}
+async function addSecondary(name) {
+    const v = prompt('输入二级分类名称');
+    if (!v) return;
+    try { await api('/categories/secondary', { method: 'POST', body: JSON.stringify({ primaryName: name, secondaryName: v }) }); loadCategories(); }
+    catch (e) { toast(e.message, false); }
+}
+async function renamePrimary(name) {
+    const v = prompt('新的一级分类名称', name);
+    if (!v || v === name) return;
+    try { await api('/categories/primary/' + encodeURIComponent(name), { method: 'PUT', body: JSON.stringify({ name: v }) }); loadCategories(); }
+    catch (e) { toast(e.message, false); }
+}
+async function delPrimary(name) {
+    if (!confirm('删除一级分类「' + name + '」（其下二级也会被删除）？')) return;
+    try { await api('/categories/primary/' + encodeURIComponent(name), { method: 'DELETE' }); loadCategories(); }
+    catch (e) { toast(e.message, false); }
+}
+async function delSecondary(primaryName, secondaryName) {
+    if (!confirm('删除二级分类「' + secondaryName + '」？')) return;
+    try { await api('/categories/secondary', { method: 'DELETE', body: JSON.stringify({ primaryName, secondaryName }) }); loadCategories(); }
+    catch (e) { toast(e.message, false); }
+}
+
+/* ========== 导入导出 / 备份 ========== */
+function exportCSV() { window.open('/api/export?token=' + encodeURIComponent(TOKEN), '_blank'); }
+async function importCSV(e) {
+    const f = e.target.files[0]; if (!f) return;
+    const fd = new FormData(); fd.append('csvFile', f);
+    try { const r = await api('/import', { method: 'POST', body: fd, headers: {} }); toast('已导入 ' + r.count + ' 条'); loadAssets(); }
+    catch (err) { toast(err.message, false); }
+    e.target.value = '';
+}
+async function manualBackup() {
+    try { const r = await api('/backup', { method: 'POST' }); toast('已备份: ' + r.file); loadBackups(); }
+    catch (e) { toast(e.message, false); }
+}
+async function loadBackups() {
+    try {
+        const r = await api('/backups');
+        document.getElementById('backupsTable').innerHTML =
+            r.items.length ? r.items.map(f => `<tr><td>${f}</td></tr>`).join('')
+                           : '<tr><td class="empty-state">暂无备份</td></tr>';
+    } catch (e) { toast(e.message, false); }
+}
+
+/* ========== 用户管理 ========== */
+async function loadUsers() {
+    try {
+        const r = await api('/users');
+        document.getElementById('usersTable').innerHTML = r.users.map(u => `
+            <tr>
+                <td>${escapeHtml(u.username)}</td>
+                <td>${u.role === 'admin' ? '管理员' : '成员'}</td>
+                <td>${u.wxBound ? '✅' : '—'}</td>
+                <td>${fmtDate(u.createdAt)}</td>
+                <td>${fmtDate(u.lastLoginAt)}</td>
+                <td>${u.id === USER.id ? '—' : `<button class="btn-danger" onclick='delUser(${JSON.stringify(u.id)})'>删除</button>`}</td>
+            </tr>`).join('') || '<tr><td colspan="6" class="empty-state">暂无</td></tr>';
+    } catch (e) { toast(e.message, false); }
+}
+function openUserModal() { document.getElementById('userModal').classList.add('active'); }
+function closeUserModal() { document.getElementById('userModal').classList.remove('active'); }
+async function saveUser() {
+    const username = document.getElementById('newUsername').value.trim();
+    const password = document.getElementById('newPassword').value;
+    const role = document.getElementById('newRole').value;
+    if (!username || !password) return toast('用户名密码必填', false);
+    try { await api('/users', { method: 'POST', body: JSON.stringify({ username, password, role }) }); toast('已添加'); closeUserModal(); loadUsers(); }
+    catch (e) { toast(e.message, false); }
+}
+async function delUser(id) {
+    if (!confirm('确认删除该用户？')) return;
+    try { await api('/users/' + id, { method: 'DELETE' }); loadUsers(); }
+    catch (e) { toast(e.message, false); }
+}
+function openChangePwdModal() { document.getElementById('pwdModal').classList.add('active'); }
+async function changePwd() {
+    const oldPassword = document.getElementById('oldPwd').value;
+    const newPassword = document.getElementById('newPwd').value;
+    try {
+        await api('/auth/change-password', { method: 'POST', body: JSON.stringify({ oldPassword, newPassword }) });
+        toast('密码已修改');
+        document.getElementById('pwdModal').classList.remove('active');
+    } catch (e) { toast(e.message, false); }
+}
+
+/* ========== 启动 ========== */
+renderUserBox();
+loadAssets();
+refreshPrimarySelect();
+</script>
+</body>
+</html>
