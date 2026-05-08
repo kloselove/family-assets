@@ -36,24 +36,58 @@ npm start                     # 默认监听 3000
 
 ```
 family-assets/
-├── server.js                  # Express 入口
-├── lib/
-│   ├── store.js               # CSV / JSON 数据访问
-│   ├── users.js               # 用户管理 + bcrypt 密码
-│   ├── auth.js                # JWT 鉴权中间件
-│   └── wechat.js              # 微信 code2Session
+├── server.js                  # Express 入口（装配中间件、挂路由、启动服务）
+├── lib/                       # 基础能力层
+│   ├── auth.js                #   JWT 签发/校验 + authRequired / adminOnly
+│   ├── backup.js              #   备份服务（立即 + 定时 cron）
+│   ├── store.js               #   CSV / JSON 数据访问，统一表头、BACKUP_DIR
+│   ├── users.js               #   用户 CRUD + bcrypt + 默认管理员初始化
+│   ├── util.js                #   asyncHandler / HttpError / errorHandler / writeCsvFile
+│   └── wechat.js              #   微信小程序 code2Session（Node 原生 https）
+├── routes/                    # 业务路由层（按域拆分）
+│   ├── auth.js                #   /api/auth/{login, wx-login, me, change-password}
+│   ├── users.js               #   /api/users（仅管理员）
+│   ├── assets.js              #   /api/assets CRUD（支持关键词/分类/过期天数过滤）
+│   ├── categories.js          #   /api/categories 一/二级 CRUD
+│   └── maintenance.js         #   /api/{stats, export, import, backup, backups}
 ├── scripts/
 │   └── init-user.js           # 命令行建用户
-├── data/
-│   ├── assets.csv             # 资产数据（CSV）
-│   ├── categories.json        # 分类
-│   └── users.json             # 用户（含 bcrypt 哈希）
-├── backups/                   # 定时备份产物
-├── public/                    # Web 端页面
-│   ├── login.html
-│   └── index.html
-└── miniprogram/               # 微信小程序源码
+├── data/                      # 运行时数据（.gitignore 中，不入库）
+│   ├── assets.csv             #   资产数据（CSV）
+│   ├── categories.json        #   分类
+│   └── users.json             #   用户（含 bcrypt 哈希）
+├── backups/                   # 定时备份产物（.gitignore）
+├── public/                    # Web 端（纯静态）
+│   ├── login.html             #   登录页
+│   └── index.html             #   主页（资产/分类/用户/备份）
+├── miniprogram/               # 微信小程序源码
+│   ├── app.js / app.json / app.wxss
+│   ├── utils/api.js           #   带 Authorization 的 request 封装
+│   └── pages/                 #   login / list / edit / categories / profile
+├── Dockerfile                 # 多阶段构建（alpine:3.19 + 裸 node 二进制）
+├── docker-compose.yml         # 一键编排，挂载 data/ backups/
+├── docker-run.sh              # 家庭部署懒人脚本
+├── .env.example               # 所有可配置项模板
+└── README.md
 ```
+
+### 设计分层
+
+```
+             ┌───────────────┐
+请求 ──────▶ │  routes/*.js  │  业务 API，throw HttpError
+             └──────┬────────┘
+                    │
+             ┌──────▼────────┐
+             │  lib/*.js     │  基础能力：auth / store / backup / util
+             └──────┬────────┘
+                    │
+             ┌──────▼────────┐
+             │  data / FS    │  CSV + JSON 持久化 + 备份目录
+             └───────────────┘
+```
+
+所有异步路由用 `asyncHandler` 包装，异常统一抛 `HttpError(status, msg)`，由 `errorHandler` 兜底转成 `{ error: '...' }` JSON 响应。
 
 ---
 
