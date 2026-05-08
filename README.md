@@ -187,12 +187,13 @@ node scripts/init-user.js parent 654321 admin
 
 适合部署在家中的 NAS / 旧 Mac mini / 树莓派 / 路由器旁路 Linux 机器等。已内置：
 
-- 多阶段构建，镜像 ≈ 130 MB（基于 `node:20-alpine`）
+- 多阶段构建，**镜像 ≈ 167 MB**（基于 `alpine:3.19` + 拷贝裸 node 二进制，去掉 npm/headers）
 - 非 root 运行（用户 `app`）+ `tini` 处理信号
 - 内置时区 `Asia/Shanghai`，日志/`cron` 按本地时间走
 - `data/`（CSV+JSON）、`backups/` 走宿主机卷挂载，**升级镜像不丢数据**
-- 自带 `HEALTHCHECK`，访问 `/api/health` 检测存活
+- 自带 `HEALTHCHECK`，访问 `/api/health` 检测存活（用 node 内置 http，不依赖 wget/curl）
 - 容器日志按 10MB / 5 文件滚动，避免占满磁盘
+- 运行时内存占用约 60-80 MB，CPU 空闲约 0.1%
 
 ### 9.1 一键部署
 
