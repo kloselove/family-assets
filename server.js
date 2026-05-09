@@ -15,7 +15,13 @@ const BACKUP_KEEP = parseInt(process.env.BACKUP_KEEP || '30', 10);
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '2mb' }));
-app.use(express.static('public'));
+app.use(express.static('public', {
+    etag: false,
+    setHeaders: (res) => {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+    }
+}));
 
 // 初始化目录、文件、默认管理员
 store.ensureInit();
