@@ -55,5 +55,24 @@ Page({
             });
             this.load();
         } catch (err) { toast(err.message); }
+    },
+    renameSecondary(e) {
+        const { primary, secondary } = e.currentTarget.dataset;
+        wx.showModal({
+            title: '修改二级分类', editable: true, placeholderText: '新名称',
+            content: secondary,
+            success: async (r) => {
+                if (!r.confirm || !r.content || r.content === secondary) return;
+                try {
+                    await request('/categories/secondary', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        data: { primaryName: primary, oldName: secondary, newName: r.content }
+                    });
+                    toast('已修改', 'success');
+                    this.load();
+                } catch (err) { toast(err.message); }
+            }
+        });
     }
 });

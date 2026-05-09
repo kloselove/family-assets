@@ -10,7 +10,8 @@
         <view class="subs">
             <block wx:if="{{c.children.length}}">
                 <view class="sub-item" wx:for="{{c.children}}" wx:for-item="s" wx:key="*this">
-                    <text class="tag">{{s}}</text>
+                    <text class="tag" data-primary="{{c.name}}" data-secondary="{{s}}" bindtap="renameSecondary">{{s}}</text>
+                    <text class="edit" data-primary="{{c.name}}" data-secondary="{{s}}" bindtap="renameSecondary">✎</text>
                     <text class="del" data-primary="{{c.name}}" data-secondary="{{s}}" bindtap="delSecondary">×</text>
                 </view>
             </block>

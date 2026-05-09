@@ -455,8 +455,10 @@ async function loadCategories() {
             <div class="subcategory-list">
                 ${c.children.map(s => `
                     <span class="pill">${escapeHtml(s)}
-                        <a style="cursor:pointer;color:#dc3545;margin-left:6px"
-                           onclick='delSecondary(${JSON.stringify(c.name)},${JSON.stringify(s)})'>×</a>
+                        <a style="cursor:pointer;color:#1976d2;margin-left:4px"
+                           onclick='renameSecondary(${JSON.stringify(c.name)},${JSON.stringify(s)})' title="编辑">✎</a>
+                        <a style="cursor:pointer;color:#dc3545;margin-left:4px"
+                           onclick='delSecondary(${JSON.stringify(c.name)},${JSON.stringify(s)})' title="删除">×</a>
                     </span>
                 `).join('') || '<span style="color:#999">无</span>'}
             </div>
@@ -493,6 +495,12 @@ async function renamePrimary(name) {
 async function delPrimary(name) {
     if (!confirm('删除一级分类「' + name + '」（其下二级也会被删除）？')) return;
     try { await api('/categories/primary/' + encodeURIComponent(name), { method: 'DELETE' }); loadCategories(); }
+    catch (e) { toast(e.message, false); }
+}
+async function renameSecondary(primaryName, oldName) {
+    const v = prompt('修改二级分类名称', oldName);
+    if (!v || v === oldName) return;
+    try { await api('/categories/secondary', { method: 'PUT', body: JSON.stringify({ primaryName, oldName, newName: v }) }); toast('已修改'); loadCategories(); }
     catch (e) { toast(e.message, false); }
 }
 async function delSecondary(primaryName, secondaryName) {
