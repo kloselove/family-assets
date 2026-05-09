@@ -21,10 +21,11 @@ function buildRouter({ backupData }) {
     router.get('/stats', asyncHandler(async (req, res) => {
         const assets = await store.readAssets();
         const now = Date.now();
+        const in7 = now + 7 * DAY_MS;
         const in30 = now + 30 * DAY_MS;
 
         const byPrimary = {};
-        let expired = 0, expiringSoon = 0;
+        let expired = 0, expiring7 = 0, expiringSoon = 0;
         for (const a of assets) {
             const k = a.primaryCategory || '未分类';
             byPrimary[k] = (byPrimary[k] || 0) + 1;
@@ -32,9 +33,11 @@ function buildRouter({ backupData }) {
             const t = new Date(a.expiryDate).getTime();
             if (isNaN(t)) continue;
             if (t < now) expired++;
+            else if (t <= in7) expiring7++;
             else if (t <= in30) expiringSoon++;
         }
-        res.json({ total: assets.length, expired, expiringSoon, byPrimary });
+        // expiringSoon 包含 7 天内的（30天内 = 7天内 + 7~30天）
+        res.json({ total: assets.length, expired, expiring7, expiringSoon: expiring7 + expiringSoon, byPrimary });
     }));
 
     /** 导出 */

@@ -87,7 +87,7 @@
     <div id="assets-tab" class="tab-content active">
         <div class="stats">
             <div class="stat-card"><h3>总资产数量</h3><div class="value" id="statTotal">0</div></div>
-            <div class="stat-card"><h3>资产种类</h3><div class="value" id="statTypes">0</div></div>
+            <div class="stat-card"><h3>7 天内将过期</h3><div class="value warn" id="statSoon7">0</div></div>
             <div class="stat-card"><h3>30 天内将过期</h3><div class="value warn" id="statSoon">0</div></div>
             <div class="stat-card"><h3>已过期</h3><div class="value danger" id="statExpired">0</div></div>
         </div>
@@ -357,7 +357,7 @@ async function loadStats() {
     try {
         const s = await api('/stats');
         document.getElementById('statTotal').textContent = s.total;
-        document.getElementById('statTypes').textContent = Object.keys(s.byPrimary || {}).length;
+        document.getElementById('statSoon7').textContent = s.expiring7;
         document.getElementById('statSoon').textContent = s.expiringSoon;
         document.getElementById('statExpired').textContent = s.expired;
     } catch (e) {}

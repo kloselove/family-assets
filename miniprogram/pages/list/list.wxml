@@ -1,7 +1,8 @@
 <view class="page">
     <view class="stat-row">
         <view class="stat"><view class="num">{{stats.total}}</view><view class="lab">总资产</view></view>
-        <view class="stat warn"><view class="num">{{stats.expiringSoon}}</view><view class="lab">即将过期</view></view>
+        <view class="stat warn"><view class="num">{{stats.expiring7}}</view><view class="lab">7天内过期</view></view>
+        <view class="stat warn"><view class="num">{{stats.expiringSoon}}</view><view class="lab">30天内过期</view></view>
         <view class="stat danger"><view class="num">{{stats.expired}}</view><view class="lab">已过期</view></view>
     </view>
 
