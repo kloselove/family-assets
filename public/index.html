@@ -489,18 +489,18 @@ async function addSecondary(name) {
 async function renamePrimary(name) {
     const v = prompt('新的一级分类名称', name);
     if (!v || v === name) return;
-    try { await api('/categories/primary/' + encodeURIComponent(name), { method: 'PUT', body: JSON.stringify({ name: v }) }); loadCategories(); }
+    try { await api('/categories/primary/' + encodeURIComponent(name), { method: 'PUT', body: JSON.stringify({ name: v }) }); toast('已修改'); loadCategories(); refreshPrimarySelect(); loadAssets(); }
     catch (e) { toast(e.message, false); }
 }
 async function delPrimary(name) {
     if (!confirm('删除一级分类「' + name + '」（其下二级也会被删除）？')) return;
-    try { await api('/categories/primary/' + encodeURIComponent(name), { method: 'DELETE' }); loadCategories(); }
+    try { await api('/categories/primary/' + encodeURIComponent(name), { method: 'DELETE' }); loadCategories(); refreshPrimarySelect(); loadAssets(); }
     catch (e) { toast(e.message, false); }
 }
 async function renameSecondary(primaryName, oldName) {
     const v = prompt('修改二级分类名称', oldName);
     if (!v || v === oldName) return;
-    try { await api('/categories/secondary', { method: 'PUT', body: JSON.stringify({ primaryName, oldName, newName: v }) }); toast('已修改'); loadCategories(); }
+    try { await api('/categories/secondary', { method: 'PUT', body: JSON.stringify({ primaryName, oldName, newName: v }) }); toast('已修改'); loadCategories(); loadAssets(); }
     catch (e) { toast(e.message, false); }
 }
 async function delSecondary(primaryName, secondaryName) {

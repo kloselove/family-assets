@@ -64,12 +64,13 @@ Page({
             success: async (r) => {
                 if (!r.confirm || !r.content || r.content === secondary) return;
                 try {
-                    await request('/categories/secondary', {
+                    const resp = await request('/categories/secondary', {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         data: { primaryName: primary, oldName: secondary, newName: r.content }
                     });
-                    toast('已修改', 'success');
+                    const n = resp.assetsUpdated || 0;
+                    toast(n ? `已修改，${n}条资产已同步` : '已修改', 'success');
                     this.load();
                 } catch (err) { toast(err.message); }
             }
