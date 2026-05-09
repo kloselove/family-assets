@@ -29,10 +29,12 @@ router.put('/primary/:name', asyncHandler(async (req, res) => {
     if (!newName) throw new HttpError(400, '新名称必填');
     if (oldName === newName) return res.json(store.readCategories());
 
+    // 更新分类定义（旧名不存在也不报错，继续更新资产）
     const data = store.readCategories();
     const c = data.categories.find(x => x.name === oldName);
-    if (!c) throw new HttpError(404, '不存在');
-    c.name = newName;
+    if (c) {
+        c.name = newName;
+    }
     store.writeCategories(data);
 
     // 同步更新所有资产的 primaryCategory
@@ -79,12 +81,17 @@ router.put('/secondary', asyncHandler(async (req, res) => {
     const data = store.readCategories();
     const p = data.categories.find(c => c.name === primaryName);
     if (!p) throw new HttpError(404, '一级分类不存在');
+
+    // 更新分类定义：旧名存在则替换，不存在则追加新名（兼容历史数据不一致）
     const i = p.children.indexOf(oldName);
-    if (i === -1) throw new HttpError(404, '二级分类不存在');
-    p.children[i] = newName;
+    if (i !== -1) {
+        p.children[i] = newName;
+    } else if (!p.children.includes(newName)) {
+        p.children.push(newName);
+    }
     store.writeCategories(data);
 
-    // 同步更新所有资产的 secondaryCategory
+    // 同步更新所有资产的 secondaryCategory（不管分类定义里有没有，只要资产匹配就更新）
     const assets = await store.readAssets();
     let changed = 0;
     for (const a of assets) {
