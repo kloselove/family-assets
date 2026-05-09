@@ -22,3 +22,4 @@ server.log
 # 微信开发者工具
 miniprogram/.idea/
 miniprogram/project.private.config.json
+dist/
