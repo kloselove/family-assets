@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "family-assets": {
+      "command": "node",
+      "args": ["./mcp-server.js"],
+      "cwd": "/path/to/family-assets",
+      "env": {
+        "DATA_DIR": "/path/to/family-assets/data"
+      }
+    }
+  }
+}

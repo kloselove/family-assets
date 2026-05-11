@@ -5,6 +5,9 @@
 - **服务端**：Node.js + Express，数据存储为 CSV + JSON 文件，方便定期同步到云端
 - **Web 前端**：纯静态页面，访问 `http://<host>:3000/`
 - **微信小程序**：`miniprogram/` 目录，支持「微信一键登录」
+- **MCP Server**：支持 AI Agent 直接操作资产数据（增删查改、分类管理）
+- **Web 前端**：纯静态页面，访问 `http://<host>:3000/`
+- **微信小程序**：`miniprogram/` 目录，支持「微信一键登录」
 
 ---
 
@@ -320,3 +323,87 @@ curl http://localhost:3000/api/health
 
 `node:20-alpine` 官方提供多架构镜像（`amd64` / `arm64` / `arm/v7`），直接 `docker compose up -d --build` 即可，无需额外配置。如本机为 `arm/v7`（老树莓派），构建时间略长。
 
+
+---
+
+## 十、MCP Server（AI Agent 接入）
+
+项目内置 MCP Server（Model Context Protocol），让 AI Agent（如 CodeBuddy、Claude Desktop 等）可以通过自然语言直接操作家庭资产数据。
+
+### 10.1 提供的 Tools
+
+| Tool | 说明 |
+| --- | --- |
+| `list_assets` | 查询资产列表（支持关键词/分类/过期天数过滤） |
+| `add_asset` | 新增资产 |
+| `update_asset` | 修改资产（通过 uuid） |
+| `delete_asset` | 删除资产 |
+| `get_stats` | 统计：总数、7 天/30 天内过期、已过期、按分类汇总 |
+| `list_categories` | 列出所有分类 |
+| `add_category` | 新增一级/二级分类 |
+| `rename_category` | 重命名分类（自动同步资产） |
+| `delete_category` | 删除分类 |
+
+### 10.2 接入配置
+
+在 AI 客户端的 MCP 配置文件中添加（以 CodeBuddy 为例）：
+
+```json
+{
+  "mcpServers": {
+    "family-assets": {
+      "command": "node",
+      "args": ["/path/to/family-assets/mcp-server.js"],
+      "env": {
+        "DATA_DIR": "/path/to/family-assets/data"
+      }
+    }
+  }
+}
+```
+
+> 把 `/path/to/family-assets` 换成你本地实际路径。
+
+### 10.3 使用示例
+
+接入后可以直接对 AI 说：
+
+- "帮我查一下家里有哪些证件快过期了"
+- "把父亲护照的过期时间改成 2028-12-31"
+- "新增一个资产：电子产品/手机/iPhone 16 Pro，数量 1"
+- "把二级分类「手机」改名为「智能手机」"
+- "统计一下家里资产总数和各分类数量"
+
+AI 会自动调用对应的 MCP Tool 完成操作，数据直接写入 `data/assets.csv`。
+
+### 10.4 本地测试
+
+```bash
+cd family-assets
+echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}' | node mcp-server.js
+```
+
+### 10.5 远程 NAS 数据操作
+
+如果数据在 NAS 上，可以通过 SSH 隧道让本地 MCP Server 直接操作远程文件：
+
+```bash
+# 挂载 NAS 数据目录（macOS 用 sshfs / SMB）
+mount -t smbfs //192.168.31.205/docker/family-assets/data /mnt/nas-data
+
+# MCP 配置指向挂载路径
+"env": { "DATA_DIR": "/mnt/nas-data" }
+```
+
+或直接在 NAS 上跑 MCP Server（通过 SSH stdio 转发）：
+
+```json
+{
+  "mcpServers": {
+    "family-assets": {
+      "command": "ssh",
+      "args": ["user@192.168.31.205", "cd /volume1/docker/family-assets && node mcp-server.js"]
+    }
+  }
+}
+```
