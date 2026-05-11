@@ -1,12 +1,11 @@
 {
   "mcpServers": {
     "family-assets": {
-      "command": "node",
-      "args": ["./mcp-server.js"],
-      "cwd": "/path/to/family-assets",
-      "env": {
-        "DATA_DIR": "/path/to/family-assets/data"
-      }
+      "command": "ssh",
+      "args": [
+        "你的NAS用户名@192.168.31.92",
+        "docker exec -i family-assets node mcp-server.js"
+      ]
     }
   }
 }
