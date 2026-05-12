@@ -330,6 +330,10 @@ curl http://localhost:3000/api/health
 
 项目内置 MCP Server（Model Context Protocol），让 AI Agent（如 CodeBuddy、Claude Desktop 等）可以通过自然语言直接操作家庭资产数据。
 
+支持两种传输模式：
+- **HTTP 模式（推荐）**：NAS 容器直接暴露 `/mcp` 端点，AI 客户端通过局域网 HTTP 连接
+- **stdio 模式**：通过 SSH 隧道连接容器内的 `mcp-server.js`
+
 ### 10.1 提供的 Tools
 
 | Tool | 说明 |
@@ -346,23 +350,41 @@ curl http://localhost:3000/api/health
 
 ### 10.2 接入配置
 
-在 AI 客户端的 MCP 配置文件中添加（以 CodeBuddy 为例）：
+#### 方式 A：HTTP 模式（推荐，部署在 NAS 上直接用）
+
+NAS 容器启动后，MCP 端点自动可用：`http://<NAS_IP>:3000/mcp`
+
+AI 客户端 MCP 配置：
 
 ```json
 {
   "mcpServers": {
     "family-assets": {
-      "command": "node",
-      "args": ["/path/to/family-assets/mcp-server.js"],
-      "env": {
-        "DATA_DIR": "/path/to/family-assets/data"
-      }
+      "type": "streamableHttp",
+      "url": "http://192.168.31.92:3000/mcp"
     }
   }
 }
 ```
 
-> 把 `/path/to/family-assets` 换成你本地实际路径。
+> 把 `192.168.31.92` 换成你 NAS 的实际局域网 IP。
+
+**无需 SSH、无需免密配置、无需本地装 Node**。只要 AI 客户端和 NAS 在同一个局域网即可。
+
+#### 方式 B：stdio 模式（通过 SSH，备用）
+
+```json
+{
+  "mcpServers": {
+    "family-assets": {
+      "command": "ssh",
+      "args": ["你的NAS用户名@192.168.31.92", "docker exec -i family-assets node /app/mcp-server.js"]
+    }
+  }
+}
+```
+
+> 需要提前配好 SSH 免密登录（`ssh-copy-id`）。
 
 ### 10.3 使用示例
 
@@ -374,36 +396,16 @@ curl http://localhost:3000/api/health
 - "把二级分类「手机」改名为「智能手机」"
 - "统计一下家里资产总数和各分类数量"
 
-AI 会自动调用对应的 MCP Tool 完成操作，数据直接写入 `data/assets.csv`。
+AI 会自动调用对应的 MCP Tool 完成操作，数据直接写入 `data/assets.csv`，Web 界面同步可见。
 
-### 10.4 本地测试
+### 10.4 测试
 
 ```bash
-cd family-assets
+# HTTP 模式测试
+curl -X POST http://192.168.31.92:3000/mcp \
+  -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}'
+
+# stdio 模式测试
 echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}' | node mcp-server.js
-```
-
-### 10.5 远程 NAS 数据操作
-
-如果数据在 NAS 上，可以通过 SSH 隧道让本地 MCP Server 直接操作远程文件：
-
-```bash
-# 挂载 NAS 数据目录（macOS 用 sshfs / SMB）
-mount -t smbfs //192.168.31.205/docker/family-assets/data /mnt/nas-data
-
-# MCP 配置指向挂载路径
-"env": { "DATA_DIR": "/mnt/nas-data" }
-```
-
-或直接在 NAS 上跑 MCP Server（通过 SSH stdio 转发）：
-
-```json
-{
-  "mcpServers": {
-    "family-assets": {
-      "command": "ssh",
-      "args": ["user@192.168.31.205", "cd /volume1/docker/family-assets && node mcp-server.js"]
-    }
-  }
-}
 ```

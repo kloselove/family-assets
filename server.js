@@ -50,6 +50,9 @@ app.use('/api/assets', require('./routes/assets'));
 app.use('/api/categories', require('./routes/categories'));
 app.use('/api', require('./routes/maintenance')({ backupData }));
 
+// MCP over HTTP（AI Agent 接入端点）
+app.use('/mcp', require('./routes/mcp'));
+
 // 统一错误处理（必须放在最后）
 app.use(errorHandler);
 
@@ -58,5 +61,6 @@ scheduleBackup(BACKUP_CRON);
 
 app.listen(PORT, () => {
     console.log(`[Server] 已启动: http://localhost:${PORT}`);
+    console.log(`[Server] MCP 端点: http://localhost:${PORT}/mcp`);
     console.log(`[Server] 定时备份: ${BACKUP_CRON}（保留 ${BACKUP_KEEP} 份）`);
 });
