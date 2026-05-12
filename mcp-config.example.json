@@ -1,15 +1,18 @@
 {
-  "_说明": "以下两种模式二选一",
+  "_说明": "以下两种模式二选一，HTTP 模式推荐",
 
-  "_HTTP模式（推荐，NAS 场景）": "AI 客户端直接通过 HTTP 连接 NAS 上的 MCP 端点",
+  "_HTTP模式（推荐）": "AI 客户端通过 HTTP + API Key 连接 NAS 上的 MCP 端点",
   "mcpServers_http": {
     "family-assets": {
       "type": "streamableHttp",
-      "url": "http://192.168.31.92:3000/mcp"
+      "url": "http://192.168.31.92:3000/mcp",
+      "headers": {
+        "Authorization": "Bearer 你的MCP_API_KEY"
+      }
     }
   },
 
-  "_SSH_stdio模式（备用）": "通过 SSH 隧道连接 NAS 容器内的 stdio MCP Server",
+  "_SSH_stdio模式（备用）": "通过 SSH 隧道，无需 API Key（SSH 本身已鉴权）",
   "mcpServers_ssh": {
     "family-assets": {
       "command": "ssh",
